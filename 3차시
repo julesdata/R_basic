@@ -1,0 +1,176 @@
+<IF문 연습>
+
+# 문제 1-1
+# a의 평균이 15이상이면 "평균이상" 아니면 "평균미만"으로 출력하시오
+
+a <- seq(1,30,4)
+
+##방법 1
+ifelse((sum(a)/length(a))>=15,"평균이상","평균미만")
+##방법 2
+ifelse(mean(a)>=15,"평균이상","평균미만")  
+##방법 3
+if(mean(a) >= 15){
+  print("평균이상")
+}else{
+  print("평균미만")
+
+# 문제 1-2
+# if , else if , else를 사용해서 tmep 조건을 만드시오
+# 0이하면 freezing, 10이하면 cold, 20이하면 cool, 30이하면 warm, 그외는 hot이 출력되게 하시오
+
+temp <- 25
+
+if(temp<=0){
+  "freezing"
+}else if(temp<=10){       #위 조건문에서 0 이하를 검증했기 때문에, 범위를 재지정하지 않아도 된다.
+  "cold"
+}else if(temp<=20){
+  "cool"
+}else if(temp<=30){
+  "warm"
+}else{
+  "hot"
+}
+  
+  # 문제 1-2_1
+temp <-c(5,20,-6,37,24,13)
+# 문제 2번의 값을 ifelse 로 바꿔서 값을 변경하시오
+
+ifelse(temp<=0, "freezing",
+       ifelse(temp<=10, "cold",
+              ifelse(temp<=20,  "cool",
+                     ifelse(temp<=30, "warm", "hot"))))
+
+# 문제 1-3
+# - ifelse 를 사용해서 iris의 Sepal.Length가 6보타 크면 1 작으면 0인 변수 생성하시오
+# - new라는 변수를 추가하고 new가 1인 Sepal.Width의 합을 구하시오
+data(iris)  
+
+iris$new <- ifelse(iris$Sepal.Length >6, 1,
+                   ifelse(iris$Sepal.Length <6, 0, ""))
+
+sum(iris[iris$new==1,"Sepal.Width"])   #질문! "Sepal.Width"를 iris$Sepal.Width로 표현하면 루프에빠지는데 왜그런것?
+#or
+sum(subset(iris,new==1,"Sepal.Width"))
+
+<Roop문 연습>
+#expend.grid 연습
+
+#문제 2-1
+wheel <- c("DD", "7", "BBB", "BB", "B", "C", "0")
+prob <- c("DD" = 0.03, "7" = 0.03, "BBB" = 0.06, 
+          "BB" = 0.1, "B" = 0.25, "C" = 0.01, "0" = 0.52)
+# wheel 과 같이 총 7개의 경우의 수가 있다.
+# 각 확률은 prob와 같고 총 3번의 시도를 했을 경우에 0.001보다 높은 경우의 수 개수는?
+# (3번 추출하며 각각 독립이다)
+# (DD, BBB, 7) 과 (DD , 7 , BBB)는 다른 경우의 수다
+
+wheels <- expand.grid(wheel,wheel,wheel)
+wheels$prob1 <- prob[wheels$Var1]
+wheels$prob2 <- prob[wheels$Var2]
+wheels$prob3 <- prob[wheels$Var3]
+wheels$prob <- wheels$prob1*wheels$prob2*wheels$prob3
+
+nrow(wheels[wheels$prob>0.001,])
+
+#문제 2-2
+# 동전을 3번 던질 떄 확률은 0.3과 0.7이다
+# 첫번째에 앞이나오고 그리고(&) 세번째에 뒤가 나올 확률을 구하시오
+
+coin <- c("앞","뒤")
+prob <- c("앞" = 0.3, "뒤" = 0.7)
+
+coins <- expand.grid(coin, coin, coin)
+coins$prob1 <- prob[coins$Var1]
+coins$prob2 <- prob[coins$Var2]
+coins$prob3 <- prob[coins$Var3]
+
+coins$prob <-coins$prob1 * coins$prob2 * coins$prob3
+
+sum(subset(coins,Var1=="앞"& Var3=="뒤","prob"))
+
+#for문 연습
+#문제 3-1
+sum <- 0
+# for문을 사용해서 1부터 100까지의 누적합을 구하시오
+
+for (i in 1:100){
+  sum <- sum+i
+  }
+sum
+
+#문제 3-2
+sum2 <- 0
+sample(1:6,1)
+# for문을 사용해서 위의 주사위 20번 던진 누적 합을 구하시오
+
+for (i in 1:20){
+   sum2 <- sum2 + sample(1:6,1)
+}
+sum2
+
+#for, while문
+#문제 4. 구구단 만들어보기
+# 2단부터 9단까지 출력해보기
+
+#ex)
+# 2 4 6 8 10 12 14 16 18
+# 3 6 9 12 ....
+# .....
+# 9 18 27 36 ....
+
+
+#문제 4_1 for문
+#seq(값 , by = 차이, length.out = 길이)
+
+for(i in 2:9){
+  print(seq(i,by=i,length.out=9))
+}
+
+#문제 4_2 while문
+#while문
+i<-2
+  
+while(i<=9){
+  print(seq(i,by=i,length.out=9))
+  i=i+1
+}
+
+<my function 문제>
+#문제 5
+# 성적을 입력했을경우 40점 이하는 "C", 70점 이하는 "B" 
+# 71점 이상은 "A"를 출력하는 function을 만드시오
+
+grade <-function(x){
+  ifelse(x<=40,"C",
+         ifelse(x<=70,"B","A"))
+}
+
+grade(100)
+
+<apply 문제>
+#문제 6
+# iris에서 각 행바다(1~4열)의 분산 열을 추가하시오 (var)
+data(iris)
+iris$var <- apply(iris[1:4],1,var)
+
+#문제 7
+# function을 활용해서 iris[,1:4]의 모든 값들은 제곱하시오
+
+apply(iris[,1:4],2,function(x){x^2}) #or
+sapply(iris[,1:4], function(x){x^2})
+
+#문제 8
+# iris에서 for문을 활용해서 숫자형(iris[,1:4]) 값을 Species별 평균을 구하시오
+# z변수에 저장
+
+tapply(iris[,1:4],iris$Species,mean) #x가 벡터가 아닌 행렬이어서 불가능
+
+z<-c()          #z 변수 저장에 z를 덮어 씌우므로 최초z에대한 사전 정의 필요. 누락시 오류      
+
+for(i in 1:4){
+    a <- tapply(iris[,i],iris$Species,mean)       #tapply는 배열로 출력됨
+    z <- rbind(z,data.frame(t(a)))                #data.frame통해 행렬생성(열로출력)->t(x)통한 행/렬 치환 후 r bind
+}
+z

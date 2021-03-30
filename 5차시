@@ -1,0 +1,161 @@
+# < dplyr 복습하기 >
+install.packages("hflights")   #패키지 안에 데이터가 포함되어있어서 사용
+library(hflights)
+data("hflights")
+library(dplyr)
+
+# 미국 휴스턴에서 출발하는 모든 비행기의 2011년 이착륙기록이 수록된 것으로 227,496건의 이착륙기록
+head(hflights)
+
+# 1월 20일 데이터 추출
+filter(hflights, Month == 1, DayofMonth == 20)
+
+# 데이터를 ArrDelay, Month, Year 순으로 정렬
+arrange(hflights, ArrDelay, Month, Year)
+
+##### 연습문제!
+
+#문제1
+# mutate를 사용해 delay라는 변수를 만들고 오름차순으로 정렬후 상위 20개의 평균을 구하시오
+# delay = ArrDelay - DepDelay
+
+hflights%>%
+  mutate(delay = ArrDelay - DepDelay)%>%
+  arrange(delay)%>%
+  summarise(mean(top_n(n=20,wt=delay)))
+
+
+#문제2
+# 비행편수(TailNum)가 20편 이상, 평균 비행거리가 2000마일 이상 평균 연착시간의 평균을 구하시오
+# 비행거리 : Distance
+# 연착시간 : ArrDelay
+
+
+##평균의 평균이 무슨말...? :group_by로 비행 편명 별 그룹을 해주었기 때문에 비행편명별 그룹 -> 각 비행편들의 평균 -> 조건해당되는 그룹의 평균을 또 구하는 것.
+
+
+hflights%>%
+  group_by(TailNum)%>%                      
+  summarise(num = n(),                           #num=n() : count와 같은 의미
+            dis=mean(Distance,na.rm=T),
+            delay = mean(ArrDelay, na.rm=T))%>%
+  filter(num >= 20, dis > 2000)%>%
+  summarise(mean(delay))                        #열에대한 연산(summary)은 다시 할 수 있다. 
+  
+###############<TIDYR>##########33#
+ ##2 (실습) 서울시 지하철 이용데이터 
+# 출처 : 공공데이터포털(www.data.go.kr)
+
+# 데이터 불러오기
+## 역변호가 150인 서울역 데이터 
+library(openxlsx)
+subway_2017 = read.xlsx('subway_1701_1709.xlsx')
+subway_2017
+
+# 데이터의 구조 확인
+str(subway_2017)
+
+# 첫 10개 관측치만 확인하기
+head(subway_2017, n=10)
+
+# 변수이름 확인 ->이름변환
+names(subway_2017)
+names(subway_2017)[6:25]
+
+## 첫 두 글자만 선택 
+substr(names(subway_2017)[6:25], 1, 2)
+
+## 앞에 'H'를 붙임
+paste0('H', substr(names(subway_2017)[6:25], 1, 2))
+
+## '='을 활용해서 변수이름 업데이트
+names(subway_2017)[6:25] <- paste0('H', substr(names(subway_2017)[6:25], 1, 2))
+names(subway_2017)
+
+
+######################## 연습문제 #############################
+
+# (실습) gather( ) 함수를 활용하여 H05부터 H24까지 변수를 모아
+# '시간대'와 '승객수'으로 구분하는 데이터 subway2 만들기
+
+subway2 = gather(subway_2017,시간대,승객수,H05:H24)
+
+## 위에서 만든 subway2 데이터와 dplyr 패키지를 활용하여
+
+# 역명/시간대별 전체 승객수 합계 계산 (승객수 합계의 내림차순으로 정렬)
+subway2 %>% 
+  group_by(역명,시간대)%>%
+  summarise(sum=sum(승객수))%>%
+  arrange(desc(sum))
+
+
+# 위의 결과를 spread( ) 함수를 활용해서 표 형태로 변환
+subway2 %>%
+  group_by(역명,시간대)%>%
+  summarise(sum=sum(승객수))%>%
+  arrange(desc(sum))%>%   #arrange를 미리 사용하면 재정렬이되기때문에, 나중에 사용
+  spread(시간대,sum)
+
+
+
+# 역명/시간대/구분별 전체 승객수 합계 계산
+subway2 %>% 
+
+
+# 2월 한달간 역명/시간대/구분별 전체 승객수 합계 계산
+subway2 %>% 
+
+###### 문자열 다루기 ######
+# 문제 1
+# words를 모두 대문자로 바꾼 상태에서 'AB'를 포함한 단어의 개수는 총 몇개이며 어떤단어들이 있는가?
+
+sum(str_detect(str_to_upper(words),'AB'))
+str_to_upper(words)[str_which(str_to_upper(words),'AB')]
+
+# 문제 2
+# words에서 "b"를 "a"로 모두 바꾸고 "aa"를 포함하는 단어 개수는?
+
+
+# 문제 3
+# words에서 "e"의 수는 전체 합과 평균은 몇인가?
+
+###### 날짜변환 ######
+head(subway_2017)
+summary(subway_2017$날짜)
+min(subway_2017$날짜)
+
+# 문제1
+# (실습) gather( ) 함수를 활용하여 H05부터 H24까지 변수를 모아
+# '시간대'와 '승객수'으로 구분하는 데이터 subway2 만들기
+# subway2 데이터의 날짜에 시간을 추가하기 ex) "2017-01-02 06:00:00"
+
+
+# 문제2
+# subway_2017 데이터에서 월과 일을 month, day 변수명으로 추가하시오
+
+# 문제3
+# 위에서 추가한 변수들 기반으로 3월중 가장 많이 탑승한 시간은 몇시인가?
+
+####### 결측치 처리해보기!!
+data(airquality)
+head(airquality)
+
+
+# 1. airquality 데이터의 결측치 개수를 구하시오 (열별로)
+
+sapply(X = airquality, function(x){sum(is.na(x))})
+
+apply(airquality, 2, function(x){sum(is.na(x))})
+
+apply(X=airquality,MARGIN=2, FUN=function(x){sum(is.na(x))}) #구분자 써줄거면 대문자로...
+
+# 2. 결측치가 있는 행들을 제거한 후 각 열의 평균을 구하시오
+
+airquality_2 <- na.omit(airquality)
+apply(airquality_2,2,mean)
+
+# 3. 결측치는 변수의 중앙값으로 대체후 각 열의 평균을 출력하시오
+airquality[is.na(airquality$Ozone), "Ozone"]<-median(airquality$Ozone, na.rm=T)
+airquality[is.na(airquality$Solar.R), "Solar.R"]<-median(airquality$Solar.R, na.rm=T)
+apply(airquality, 2, mean)
+

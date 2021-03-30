@@ -1,0 +1,185 @@
+## 1.iris 데이터중 1부터 50행중 홀수, 100부터 150행중 짝수 선택
+slice(활용)
+
+slice(iris,seq(1,50,by=2),seq(100,150,by=2))
+
+## 2.iris 데이터중 Species가 "setosa"이면서 Sepal.Length가 5보다 큰 값을 추출하시오
+filter(활용)
+
+filter(iris, Species=="setosa", Sepal.Length > 5)
+
+## 3.iris 데이터중 Sepal.Length는 내림차순 Sepal.Width는 오름차순으로 출력하시오
+arrange(활용)
+
+arrange(iris,desc(Sepal.Length),Sepal.Width)
+
+## 4.iris 데이터중 "Sepal.Width" 와 "Species" 열을 선택하시오
+select(활용)
+
+select(iris,Sepal.Width,Species) ##dplyr::를 함수 앞에 붙히면 dplyr패키지 안에서의 함수로 특정한다. 
+
+## 5.iris 데이터중 "Species"의 종류를 확인하시오
+distinct(활용)
+
+distinct(iris,Species)
+
+## 6.iris 데이터중 "Sepal.Length" 와 "Sepal.Width" 두변수의 합을 Sepal_sum이라는 변수에 저장하시오
+mutate(활용)
+mutate(iris,Sepal_sum = Sepal.Length + Sepal.Width)
+
+## 7.iris 데이터중 "Species"의 종별 개수를 확인하시오
+count(활용)
+count(iris,Species)
+
+## 8.iris 데이터중 Sepal.Length의 합과 Sepal.Width의 평균을 구하시오
+summarise(활용)
+summarise(iris, sum=sum(Sepal.Length), mean=mean(Sepal.Width))
+
+## 9.iris 데이터중 "Petal.Width"의 상위 5개의 값을 출력
+top_n(활용)
+top_n(iris,5,Petal.Width)
+
+#########(실습) 보험료 데이터 요약하기
+
+# 예제 데이터 불러오기 
+ins = read.csv('insurance.csv')
+head(ins)
+
+#1 데이터 ins에서 sex가 female인 관측치로 region별 관측치 수 계산
+ins%>%
+  filter(sex=='female')%>%
+  group_by(region)%>%
+  summarise(count=length(charges))%>% ##  summarise에서는 count함수를 사용할 수 없다. 
+  arrange(region)                     ## or summarise(num=n()) num=n():갯수 함수
+
+ins%>%
+  filter(sex=='female')%>%
+  count(region)%>%    ## count 자체가 그룹화하는 개념이 포함되므로 group by를 써주지 않아도 된다.(카운트만 할거면)
+  arrange(region)
+  
+#2 charges가 10000이상인 관측치 중에서 smoker별 평균 age 계산
+
+  ins%>%
+    filter(charges>=10000) %>%
+    group_by(smoker) %>%
+    summarise(mean(age))
+              
+  
+#3 age가 40 미만인 관측치 중에서 sex, smoker별 charges의 평균과 최댓값 계산   
+
+charges.smoker = ins%>%
+  filter(age < 40) %>%
+  group_by(sex,smoker)%>%
+  summarise(mean=mean(charges), max=max(charges))
+  
+
+  
+# 데이터를 csv파일로 저장하기
+# 위에서 작업한 내용 중 3번을 csv파일로 저장해보기
+
+write(charges.smoker,'charges_smoker.csv',row.names=false)
+
+#########(실습) 국민건강보험공단 데이터 요약하기
+
+# 문제1
+# 성 / 연령대 / 진료과목별 환자수  계산  (환자수 기준 내림차순 정렬)
+
+NHIS %>%
+  dplyr::count(SEX,AGE_GROUP,DSBJT_CD) %>%
+  arrange(desc(n))
+
+NHIS %>%
+  dplyr::group_by(SEX,AGE_GROUP,DSBJT_CD) %>%
+  summarise(n=length(SEX)) %>%
+  arrange(desc(n))
+
+# 문제2
+# 성별/연령대별 평균(요양일수/입내원일수/급여비용/본인부담금액) 계산 후 급여비용 내림차순으로 정렬
+
+NHIS %>%
+  dplyr::group_by(SEX,AGE_GROUP) %>%
+  summarise(m1=mean(VSCN), m2=mean(RECN),m3=mean(EDEC_TRAMT),m4=(EDEC_SBRDN_AMT) ) %>%
+  arrange(desc(mean(m3)))
+  
+  
+# 문제3
+# 성별/연령대별 3개 최고빈도 주상병코드
+## top_n(n=k, wt=기준변수) : 기준변수를 기준으로 상위 k개 관측치 선택
+## 주상병코드 조회 (MAIN_SICK)
+
+NHIS %>%
+  dplyr::group_by(SEX,AGE_GROUP,MAIN_SICK) %>%
+  summarise(n=length(MAIN_SICK))%>%
+  top_n(n=3, wt=n)%>%
+  arrange(SEX,AGE_GROUP,desc(n))  
+
+  NHIS %>%
+    group_by(SEX, AGE_GROUP, MAIN_SICK) %>%
+    summarise(n=n()) %>%
+    top_n(n=3 , wt=n) %>%
+    arrange(SEX, AGE_GROUP, desc(n))
+  
+  NHIS %>%
+    count(SEX, AGE_GROUP, MAIN_SICK) %>%
+    group_by(SEX, AGE_GROUP) %>%
+    top_n(n=3 , wt=n) %>%
+    arrange(SEX, AGE_GROUP, desc(n))
+    
+  ###추가 연습
+  ###### mutate의 확장
+## 변수의 group별 비율을 아고싶다면?? mutate활용!
+data(iris)
+head(iris)
+
+## 도전해보자
+## Species 별로 Sepal.Length의 비중을 구하시오
+
+#내답
+iris%>% 
+  group_by(Species)%>%
+  mutate(sum=sum(Sepal.Length))%>%
+  mutate(prop=Sepal.Length/sum)%>%
+  select(Species,Sepal.Length,prop)
+  
+#쌤답
+iris %>%
+  dplyr::group_by(Species) %>%
+  dplyr::mutate(sum = sum(Sepal.Length)) %>%
+  dplyr::mutate(prop = Sepal.Length/sum) %>%
+  dplyr::select(Species,Sepal.Length,prop)
+
+# 종별 비중 요약
+iris %>%
+  mutate(All.sum=sum(Sepal.Length))%>%
+  group_by(Species, All.sum) %>%
+  summarise(sum=sum(Sepal.Length))%>%
+  mutate(prop=sum/All.sum)
+
+###### mutate의 확장2
+## group별로 번호를 매기고 싶다면??
+
+iris  %>% 
+  arrange(Species,Sepal.Length) %>%
+  dplyr::group_by(Species) %>%
+  dplyr::mutate(seq_num = row_number()) %>% data.frame() #data.frame()하면 값이 끝까지 조회됨 
+
+# 도전해보자
+# iris 데이터에서 Species별 Sepal.Width가 3번쨰로 큰 값들의 합은?
+
+A1<- iris %>%
+  group_by(Species) %>%
+  arrange(Species,desc(Sepal.Width))%>%
+  mutate(seq_num=row_number()) %>%
+  filter(seq_num==3)
+  
+sum(A1$Sepal.Width)
+
+#한번에 전체 합계 구하는 방법은?
+
+iris %>%
+  group_by(Species) %>%
+  arrange(Species,desc(Sepal.Width))%>%
+  mutate(seq_num=row_number()) %>%
+  filter(seq_num==3) %>%
+  ungroup() %>%                                  #ungroup을 해주면 필터된 상태에서 그룹만 풀려서 전체 합계 구하기 가능!
+  summarise(sum = sum(Sepal.Width))
